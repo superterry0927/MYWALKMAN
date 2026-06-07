@@ -113,14 +113,18 @@
             cursor: pointer; /* 新增：讓游標變成可點擊的樣式 */
         }
 
-        /* 正在播放的高亮歌詞 */
-        .lyric-line.active {
-            color: #0000C6;
-            font-size: 19px;
-            font-weight: bold;
-            /* 新增：手指點擊歌詞時的視覺回饋（稍微變淡、縮小） */
+        /* 新增：手指點擊歌詞時的視覺回饋（稍微變淡、縮小） */
+        .lyric-line:active {
             opacity: 0.5;
             transform: scale(0.95);
+        }
+
+        /* 正在播放的高亮歌詞 */
+        .lyric-line.active {
+            color: #00a8ff; /* 更改為 KTV 風格的亮藍色 */
+            font-size: 19px;
+            font-weight: bold;
+            transform: scale(1.05);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         
@@ -207,7 +211,7 @@
            ========================================= */
         const mediaDatabase = {
             "1": {
-                // 上傳 GitHub 時請改回你的檔名，例如 "cover1.png"
+                // 上傳 GitHub 時請改回你的檔名，例如 "cover1.jpg"
                 coverUrl: "cover1.png", 
                 audioUrl: "music1.mp3",
                 // 這裡填寫 LRC 格式的歌詞。注意：每一行前面都要有 [分:秒.毫秒]
@@ -288,16 +292,8 @@
                     div.className = 'lyric-line';
                     div.id = `lyric-${index}`;
                     div.innerText = lyric.text;
-                    // 2. 將歌詞渲染到畫面上
-            function renderLyrics(lyrics) {
-                lyricsContainer.innerHTML = ''; // 清空舊歌詞
-                lyrics.forEach((lyric, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'lyric-line';
-                    div.id = `lyric-${index}`;
-                    div.innerText = lyric.text;
 
-                    // 👇 請把這段【新增的點擊功能】貼在這裡 👇
+                    // 【新增功能：點擊歌詞即可快轉/倒轉】
                     div.addEventListener('click', () => {
                         // 確保音樂已經成功載入才能跳轉
                         if (!isAudioLoaded) return; 
@@ -310,11 +306,7 @@
                             cover.style.animationPlayState = 'running';
                         }).catch(err => console.log(err));
                     });
-                    // 👆 新增的部分到此結束 👆
 
-                    lyricsContainer.appendChild(div);
-                });
-            }
                     lyricsContainer.appendChild(div);
                 });
             }
