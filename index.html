@@ -16,7 +16,6 @@
             background-color: #2b2b2b; 
             margin: 0; 
             font-family: 'Helvetica Neue', Arial, sans-serif; 
-            /* 預防手機選取文字反白 */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -53,12 +52,12 @@
             position: relative;
         }
 
-        /* 讀取中的提示文字 */
         .loading-text {
             position: absolute;
             color: #888;
             font-size: 14px;
             z-index: 1;
+            text-align: center;
         }
         
         .cover-art { 
@@ -69,8 +68,9 @@
             animation: spin 4s linear infinite; 
             animation-play-state: paused; 
             z-index: 2;
-            display: none; /* 預設隱藏，讀取成功後顯示 */
+            display: none; 
             border: 2px solid #333;
+            background-color: #222;
         }
         
         .controls { 
@@ -93,16 +93,16 @@
             outline: none;
         }
         
-        button:active { 
+        button:active:not(:disabled) { 
             transform: translateY(5px); 
             box-shadow: 0px 0px 0px #888, 1px 3px 5px rgba(0,0,0,0.3); 
         }
 
         button:disabled {
-            background-color: #ccc !important;
+            background-color: #999 !important;
+            color: #ccc;
             cursor: not-allowed;
-            transform: none;
-            box-shadow: 0px 5px 0px #888;
+            box-shadow: 0px 5px 0px #666;
         }
         
         #play-btn { background-color: #ff471a; color: white; }
@@ -112,7 +112,6 @@
             100% { transform: rotate(360deg); } 
         }
 
-        /* 錯誤訊息樣式 */
         #error-msg {
             color: #ff471a;
             text-align: center;
@@ -130,40 +129,39 @@
         
         <div class="tape-window">
             <div class="loading-text" id="status-text">載入中...</div>
-            <!-- 封面圖片 -->
             <img src="" alt="Cover Art" class="cover-art" id="cover">
         </div>
         
         <div class="controls">
-            <!-- 音樂播放器 (隱藏) -->
-            <audio id="audio-player"></audio>
+            <audio id="audio-player" preload="auto"></audio>
             
             <button id="play-btn" disabled>PLAY</button>
             <button id="stop-btn" disabled>STOP</button>
         </div>
 
-        <div id="error-msg">找不到對應的音樂資料，請確認卡片網址。</div>
+        <div id="error-msg">找不到對應的資料。</div>
     </div>
 
     <script>
         /* =========================================
-     
+           資料設定區
            ========================================= */
-        // 使用者對應表：左邊的數字對應網址的 ?id=數字
-        // 將 "你的圖片直連網址" 與 "你的音樂直連網址" 替換掉
         const mediaDatabase = {
             "1": {
-                coverUrl: "https://drive.google.com/uc?export=view&id=1fpHSTHIUSMrDnKwrs2k37qn9EczGNMZh", // 範例圖
-                audioUrl: "https://drive.google.com/uc?export=view&id=1uDujXqzrzsuj3Qqiw0RMCDjfeckIe2Ib"   // 範例音訊
+                // 【注意】為了讓你在這裡能預覽成功，我暫時換成了網路圖片與音樂。
+                // 當你要把這些檔案上傳到 GitHub 時，請把引號裡面的字改回 "cover1.jpg" 與 "music1.mp3"！
+                coverUrl: "https://picsum.photos/300/300?random=1", 
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"   
             },
             "2": {
-                coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", // 範例圖
-                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"   // 範例音訊
+                // 上傳 GitHub 時請改回 "cover2.jpg"
+                coverUrl: "https://picsum.photos/300/300?random=2", 
+                // 上傳 GitHub 時請改回 "music2.mp3"
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"   
             },
-            // 你可以繼續往下複製新增 "3", "4"... 到 "10"
             "3": {
-                coverUrl: "", 
-                audioUrl: ""
+                coverUrl: "cover3.jpg", 
+                audioUrl: "music3.mp3"
             }
         };
 
@@ -171,7 +169,6 @@
            互動邏輯區 (無需修改)
            ========================================= */
         document.addEventListener('DOMContentLoaded', () => {
-            // 取得網址列上的 ?id=參數 (如果沒有，預設給 '1')
             const urlParams = new URLSearchParams(window.location.search);
             const userId = urlParams.get('id') || '1'; 
 
@@ -182,36 +179,62 @@
             const statusText = document.getElementById('status-text');
             const errorMsg = document.getElementById('error-msg');
 
-            // 檢查資料庫是否有這個使用者的資料
+            // 判斷音效檔是否成功載入的旗標
+            let isAudioLoaded = true;
+
             if (mediaDatabase[userId] && mediaDatabase[userId].audioUrl !== "") {
                 const userData = mediaDatabase[userId];
                 
-                // 設定圖片與音樂來源
                 cover.src = userData.coverUrl;
                 audio.src = userData.audioUrl;
 
-                // 當圖片載入完成時
+                // 圖片載入成功
                 cover.onload = () => {
                     cover.style.display = 'block';
                     statusText.style.display = 'none';
+                    if(isAudioLoaded) {
+                        playBtn.disabled = false;
+                        stopBtn.disabled = false;
+                    }
+                };
+
+                // 【修正：圖片載入失敗的防護】
+                cover.onerror = () => {
+                    console.error("圖片載入失敗！如果你在預覽區看到這個錯誤，是因為檔案還沒上傳到 GitHub。");
+                    cover.onerror = null; // 防止無限迴圈
+                    cover.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%23333' width='120' height='120'/%3E%3Ctext fill='%23888' font-family='sans-serif' font-size='14' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E"; // 顯示備用灰色圓圈
+                    cover.style.display = 'block';
+                    statusText.style.display = 'none';
+                };
+
+                // 【修正：音訊載入失敗的防護】
+                audio.onerror = () => {
+                    console.error("音樂載入失敗！請確認檔名是否正確。");
+                    isAudioLoaded = false;
+                    playBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    playBtn.innerText = "ERROR";
+                    statusText.innerText = "音樂載入失敗";
+                    statusText.style.display = 'block';
+                };
+
+                // 當音訊可以播放時才解鎖按鈕
+                audio.oncanplay = () => {
+                    isAudioLoaded = true;
                     playBtn.disabled = false;
                     stopBtn.disabled = false;
                 };
 
             } else {
-                // 找不到資料的錯誤處理
                 statusText.innerText = "無效的 ID";
                 errorMsg.style.display = 'block';
             }
 
-            // --- 播放控制邏輯 ---
             playBtn.addEventListener('click', () => {
-                // 嘗試播放音樂
                 audio.play().then(() => {
                     cover.style.animationPlayState = 'running';
                 }).catch(error => {
-                    console.error("播放失敗可能原因：瀏覽器阻擋或網址失效", error);
-                    alert("無法播放音樂，請檢查您的網路或連結是否有效。");
+                    console.error("播放失敗", error);
                 });
             });
 
@@ -220,7 +243,6 @@
                 cover.style.animationPlayState = 'paused';
             });
             
-            // 音樂播完時停止旋轉
             audio.addEventListener('ended', () => {
                 cover.style.animationPlayState = 'paused';
             });
