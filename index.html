@@ -2,53 +2,60 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專屬隨身聽</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的主題曲</title>
     <style>
         /* =========================================
-           視覺設計 (CSS) 
+           視覺設計 (CSS) - 滿版手機介面優化
            ========================================= */
         body { 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
-            background-color: #2b2b2b; 
+            background-color: #1a1a1a; 
             margin: 0; 
             font-family: 'Helvetica Neue', Arial, sans-serif; 
             user-select: none;
             -webkit-user-select: none;
+            overflow: hidden; /* 防止整個網頁上下滑動 */
         }
         
         .walkman-body { 
             background: linear-gradient(145deg, #e6e6e6, #c0c0c0); 
-            width: 320px; 
-            padding: 30px 20px; 
-            border-radius: 20px; 
-            box-shadow: 10px 10px 20px #1a1a1a, inset -2px -2px 6px #999, inset 2px 2px 6px #fff; 
+            /* 針對手機滿版優化 */
+            width: 90vw; 
+            max-width: 450px; 
+            height: 90vh; 
+            max-height: 850px;
+            padding: 25px 20px; 
+            border-radius: 25px; 
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.8), inset -2px -2px 6px #999, inset 2px 2px 6px #fff; 
             border: 2px solid #a3a3a3; 
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
 
         .brand-text {
             text-align: center;
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 15px;
-            letter-spacing: 2px;
+            font-size: 16px;
+            font-weight: 900;
+            color: #444;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
         }
         
         .tape-window { 
             background-color: #111; 
-            height: 180px; 
-            border-radius: 12px; 
-            margin-bottom: 30px; 
+            flex: 0 0 40%; /* 佔據畫面上方 40% 空間 */
+            border-radius: 15px; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             overflow: hidden; 
-            border: 4px solid #444; 
-            box-shadow: inset 0 0 15px #000; 
+            border: 4px solid #333; 
+            box-shadow: inset 0 0 25px #000; 
             position: relative;
         }
 
@@ -60,41 +67,83 @@
             text-align: center;
         }
         
+        /* 放大版 CD 封面 */
         .cover-art { 
-            width: 120px; 
-            height: 120px; 
+            width: 200px; 
+            height: 200px; 
             border-radius: 50%; 
             object-fit: cover; 
-            animation: spin 4s linear infinite; 
+            animation: spin 5s linear infinite; 
             animation-play-state: paused; 
             z-index: 2;
             display: none; 
-            border: 2px solid #333;
+            border: 4px solid #222;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
             background-color: #222;
+        }
+
+        /* 歌詞容器區塊 */
+        .lyrics-wrapper {
+            flex: 1; /* 佔滿剩餘空間 */
+            margin: 20px 0;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            /* 讓上下邊緣有漸層消失的效果 */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+
+        .lyrics-container {
+            position: absolute;
+            top: 50%; /* 讓第一句從中間開始 */
+            width: 100%;
+            text-align: center;
+            transition: transform 0.4s ease-out; /* 捲動動畫 */
+        }
+
+        .lyric-line {
+            padding: 10px 15px;
+            font-size: 15px;
+            color: #666;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+
+        /* 正在播放的高亮歌詞 */
+        .lyric-line.active {
+            color: #ff471a;
+            font-size: 19px;
+            font-weight: bold;
+            transform: scale(1.05);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         
         .controls { 
             display: flex; 
             justify-content: space-between; 
-            padding: 0 10px;
+            padding: 0 5px;
+            margin-top: auto; /* 推到最底部 */
         }
         
         button { 
-            width: 45%; 
-            height: 50px; 
-            border-radius: 8px; 
+            width: 46%; 
+            height: 60px; /* 針對手機按壓優化放大 */
+            border-radius: 10px; 
             border: none; 
             font-weight: 900; 
-            font-size: 16px;
+            font-size: 18px;
             letter-spacing: 2px;
             cursor: pointer; 
-            box-shadow: 0px 5px 0px #888, 2px 8px 10px rgba(0,0,0,0.3); 
+            box-shadow: 0px 6px 0px #888, 2px 8px 12px rgba(0,0,0,0.3); 
             transition: transform 0.1s, box-shadow 0.1s; 
             outline: none;
         }
         
         button:active:not(:disabled) { 
-            transform: translateY(5px); 
+            transform: translateY(6px); 
             box-shadow: 0px 0px 0px #888, 1px 3px 5px rgba(0,0,0,0.3); 
         }
 
@@ -102,7 +151,7 @@
             background-color: #999 !important;
             color: #ccc;
             cursor: not-allowed;
-            box-shadow: 0px 5px 0px #666;
+            box-shadow: 0px 6px 0px #666;
         }
         
         #play-btn { background-color: #ff471a; color: white; }
@@ -116,7 +165,7 @@
             color: #ff471a;
             text-align: center;
             font-size: 14px;
-            margin-top: 20px;
+            margin-top: 15px;
             font-weight: bold;
             display: none;
         }
@@ -125,11 +174,18 @@
 <body>
 
     <div class="walkman-body">
-        <div class="brand-text">STEREO CASSETTE PLAYER</div>
+        <div class="brand-text">我的主題曲</div>
         
         <div class="tape-window">
             <div class="loading-text" id="status-text">載入中...</div>
             <img src="" alt="Cover Art" class="cover-art" id="cover">
+        </div>
+
+        <!-- 動態歌詞顯示區 -->
+        <div class="lyrics-wrapper">
+            <div class="lyrics-container" id="lyrics-container">
+                <!-- 歌詞會透過 JavaScript 動態生成在這裡 -->
+            </div>
         </div>
         
         <div class="controls">
@@ -144,29 +200,43 @@
 
     <script>
         /* =========================================
-           資料設定區
+           資料設定區 (加入 lrc 歌詞欄位)
            ========================================= */
         const mediaDatabase = {
             "1": {
-                // 【注意】為了讓你在這裡能預覽成功，我暫時換成了網路圖片與音樂。
-                // 當你要把這些檔案上傳到 GitHub 時，請把引號裡面的字改回 "cover1.jpg" 與 "music1.mp3"！
+                // 上傳 GitHub 時請改回你的檔名，例如 "cover1.jpg"
                 coverUrl: "cover1.jpg", 
-                audioUrl: "music1.mp3"   
+                audioUrl: "music1.mp3",
+                // 這裡填寫 LRC 格式的歌詞。注意：每一行前面都要有 [分:秒.毫秒]
+                lrc: `
+[00:16.88]校園裡笛聲悠揚　吹奏著畢業的樂章
+[00:24.68]背起相機走進故鄉　紀錄那最美的光芒
+[00:32.68]你是天資聰穎的少年　談吐間充滿自信力量
+[00:40.58]廖彥軍　向著夢想出發吧
+[00:43.99]在那寬廣舞台　你要盡情散發光華
+[00:48.07]像璀璨星辰　在那高處發熱發亮
+[00:52.10]未來的路　由你親手去勾勒畫像
+[00:56.80]活潑有禮　口才流利　大家都為你著迷
+[01:00.58]智慧是你的羽翼　讓你飛得更高更有力
+[01:04.83]但記得言語要得體　溫柔體察那每分情誼
+[01:12.32]更上一層樓　莫忘初衷那份純真
+[01:20.33]在成長的路上　打磨出最閃耀的靈魂
+[01:26.58]清脆笛音在迴盪　少年志氣比天長
+[01:30.86]去吧彥軍　去寫下屬於你的輝煌
+                `
             },
             "2": {
-                // 上傳 GitHub 時請改回 "cover2.jpg"
-                coverUrl: "https://picsum.photos/300/300?random=2", 
-                // 上傳 GitHub 時請改回 "music2.mp3"
-                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"   
-            },
-            "3": {
-                coverUrl: "cover3.jpg", 
-                audioUrl: "music3.mp3"
+                coverUrl: "cover2.jpg", 
+                audioUrl: "music2.mp3",
+                lrc: `
+[00:00.00] 第二首歌的歌詞
+[00:03.00] 請在這裡輸入...
+                `
             }
         };
 
         /* =========================================
-           互動邏輯區 (無需修改)
+           互動邏輯區
            ========================================= */
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -178,9 +248,46 @@
             const stopBtn = document.getElementById('stop-btn');
             const statusText = document.getElementById('status-text');
             const errorMsg = document.getElementById('error-msg');
+            const lyricsContainer = document.getElementById('lyrics-container');
 
-            // 判斷音效檔是否成功載入的旗標
             let isAudioLoaded = true;
+            let parsedLyrics = []; // 儲存解析後的歌詞陣列
+            let currentLyricIndex = -1; // 記錄目前播放到第幾句
+
+            // 1. 解析 LRC 格式的函數
+            function parseLRC(lrcString) {
+                const lines = lrcString.split('\n');
+                const result = [];
+                // 正規表達式用來抓取 [00:00.00] 或 [00:00.000]
+                const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+                
+                for (let line of lines) {
+                    const match = line.match(timeReg);
+                    if (match) {
+                        const min = parseInt(match[1]);
+                        const sec = parseInt(match[2]);
+                        const ms = parseInt(match[3].padEnd(3, '0')); 
+                        const time = min * 60 + sec + ms / 1000; // 換算成總秒數
+                        const text = line.replace(timeReg, '').trim();
+                        if (text) {
+                            result.push({ time: time, text: text });
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // 2. 將歌詞渲染到畫面上
+            function renderLyrics(lyrics) {
+                lyricsContainer.innerHTML = ''; // 清空舊歌詞
+                lyrics.forEach((lyric, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'lyric-line';
+                    div.id = `lyric-${index}`;
+                    div.innerText = lyric.text;
+                    lyricsContainer.appendChild(div);
+                });
+            }
 
             if (mediaDatabase[userId] && mediaDatabase[userId].audioUrl !== "") {
                 const userData = mediaDatabase[userId];
@@ -188,7 +295,14 @@
                 cover.src = userData.coverUrl;
                 audio.src = userData.audioUrl;
 
-                // 圖片載入成功
+                // 處理歌詞
+                if (userData.lrc) {
+                    parsedLyrics = parseLRC(userData.lrc);
+                    renderLyrics(parsedLyrics);
+                } else {
+                    lyricsContainer.innerHTML = '<div class="lyric-line">無歌詞資料</div>';
+                }
+
                 cover.onload = () => {
                     cover.style.display = 'block';
                     statusText.style.display = 'none';
@@ -198,18 +312,14 @@
                     }
                 };
 
-                // 【修正：圖片載入失敗的防護】
                 cover.onerror = () => {
-                    console.error("圖片載入失敗！如果你在預覽區看到這個錯誤，是因為檔案還沒上傳到 GitHub。");
-                    cover.onerror = null; // 防止無限迴圈
-                    cover.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%23333' width='120' height='120'/%3E%3Ctext fill='%23888' font-family='sans-serif' font-size='14' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E"; // 顯示備用灰色圓圈
+                    cover.onerror = null; 
+                    cover.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23333' width='200' height='200'/%3E%3Ctext fill='%23888' font-family='sans-serif' font-size='18' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E"; 
                     cover.style.display = 'block';
                     statusText.style.display = 'none';
                 };
 
-                // 【修正：音訊載入失敗的防護】
                 audio.onerror = () => {
-                    console.error("音樂載入失敗！請確認檔名是否正確。");
                     isAudioLoaded = false;
                     playBtn.disabled = true;
                     stopBtn.disabled = true;
@@ -218,7 +328,6 @@
                     statusText.style.display = 'block';
                 };
 
-                // 當音訊可以播放時才解鎖按鈕
                 audio.oncanplay = () => {
                     isAudioLoaded = true;
                     playBtn.disabled = false;
@@ -229,6 +338,39 @@
                 statusText.innerText = "無效的 ID";
                 errorMsg.style.display = 'block';
             }
+
+            // 3. 核心：監聽音樂時間，同步更新歌詞狀態
+            audio.addEventListener('timeupdate', () => {
+                if (parsedLyrics.length === 0) return;
+                
+                const currentTime = audio.currentTime;
+                // 找出目前應該播放哪一句
+                let newIndex = parsedLyrics.findIndex((lyric, index) => {
+                    const nextTime = parsedLyrics[index + 1] ? parsedLyrics[index + 1].time : Infinity;
+                    return currentTime >= lyric.time && currentTime < nextTime;
+                });
+
+                // 如果行數有變更，才執行更新與動畫
+                if (newIndex !== -1 && newIndex !== currentLyricIndex) {
+                    // 移除舊的高亮
+                    if (currentLyricIndex !== -1) {
+                        const oldElement = document.getElementById(`lyric-${currentLyricIndex}`);
+                        if (oldElement) oldElement.classList.remove('active');
+                    }
+                    
+                    // 加上新的高亮
+                    const newElement = document.getElementById(`lyric-${newIndex}`);
+                    if (newElement) {
+                        newElement.classList.add('active');
+                        
+                        // 計算捲動距離：讓高亮的該行保持在容器中央
+                        // 單行預估高度約為 40px (15px padding + 字體)
+                        const offset = newIndex * -40; 
+                        lyricsContainer.style.transform = `translateY(${offset}px)`;
+                    }
+                    currentLyricIndex = newIndex;
+                }
+            });
 
             playBtn.addEventListener('click', () => {
                 audio.play().then(() => {
