@@ -111,15 +111,15 @@
             padding: 12px 15px;
             font-size: 16px; /* 統一字體大小 */
             color: #666;
-            transition: color 0.3s ease, text-shadow 0.3s ease; 
+            transition: color 0.3s ease, text-shadow 0.3s ease; /* 只做顏色與發光的漸變動畫 */
             min-height: 20px;
         }
 
-        /* 正在播放的高亮歌詞 (一般深藍色，無發光) */
+        /* 正在播放的高亮歌詞 (優化版：純粹發光亮藍色，不放大) */
         .lyric-line.active {
-            color: #003399; /* 改為沈穩的深藍色 */
+            color: #003399; 
             font-weight: bold;
-            text-shadow: none; /* 移除 KTV 霓虹發光感 */
+            text-shadow: 0px 0px 8px rgba(0, 168, 255, 0.6); /* KTV 發光質感 */
         }
         
         .controls { 
@@ -201,10 +201,9 @@
 
     <script>
         /* =========================================
-           資料設定區 (資料庫)
+           資料設定區
            ========================================= */
         const mediaDatabase = {
-            // 【第 1 組資料】(網址輸入 ?id=1 時讀取)
             "1": {
                 coverUrl: "cover1.png", 
                 audioUrl: "music1.mp3",
@@ -223,21 +222,6 @@
 [01:20.33]在成長的路上　打磨出最閃耀的靈魂
 [01:26.58]清脆笛音在迴盪　少年志氣比天長
 [01:30.86]去吧彥軍　去寫下屬於你的輝煌
-                `
-            },
-            // 【第 2 組資料】(網址輸入 ?id=2 時讀取)
-            // 注意：第 1 組的結尾大括號後面一定要加上逗號「,」
-            "2": {
-                // 上傳 GitHub 後，這裡可換成 "cover2.jpg"
-                coverUrl: "https://picsum.photos/400/400?random=2", 
-                // 上傳 GitHub 後，這裡可換成 "music2.mp3"
-                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", 
-                lrc: `
-[00:00.00] 準備播放：第二首主題曲
-[00:05.00] 恭喜你！成功新增了第二首歌
-[00:10.00] 只要你的網址後面加上 ?id=2
-[00:15.00] 系統就會自動切換到這裡的音樂和圖片
-[00:20.00] 趕快製作下一張 NFC 卡片吧！
                 `
             }
         };
@@ -300,7 +284,7 @@
                 });
             }
 
-            // 【嘗試自動播放的核心函數】
+            // 【新增：嘗試自動播放的核心函數】
             function attemptAutoplay() {
                 if (hasAttemptedAutoplay) return;
                 hasAttemptedAutoplay = true;
@@ -311,7 +295,7 @@
                     statusText.style.display = 'none';
                     console.log("瀏覽器允許自動播放，音樂已啟動！");
                 }).catch(error => {
-                    // 自動播放被阻擋
+                    // 自動播放被阻擋（非常正常的情況）
                     console.warn("瀏覽器阻擋了自動播放，需等待使用者點擊：", error);
                     statusText.innerText = "請點擊 PLAY 播放";
                     statusText.style.display = 'block';
@@ -340,7 +324,7 @@
                     if(isAudioLoaded) {
                         playBtn.disabled = false;
                         stopBtn.disabled = false;
-                        attemptAutoplay(); 
+                        attemptAutoplay(); // 圖片與音樂皆備妥，嘗試播放
                     }
                 };
 
@@ -351,7 +335,7 @@
                         if (cover.style.display === 'block') {
                             playBtn.disabled = false;
                             stopBtn.disabled = false;
-                            attemptAutoplay(); 
+                            attemptAutoplay(); // 圖片與音樂皆備妥，嘗試播放
                         }
                     }
                 };
@@ -386,12 +370,15 @@
             // 當歌詞容器被滑動時...
             let lastScrubTime = 0;
             lyricsWrapper.addEventListener('scroll', () => {
+                // 如果是系統自動捲動，或是還沒載入，就不介入
                 if (!isUserInteracting || parsedLyrics.length === 0 || !isAudioLoaded) return;
 
+                // 計算目前畫面的正中央位置
                 const wrapperCenter = lyricsWrapper.scrollTop + lyricsWrapper.clientHeight / 2;
                 let closestIndex = 0;
                 let minDistance = Infinity;
 
+                // 找出哪一句歌詞最靠近畫面中央
                 const lyricElements = document.querySelectorAll('.lyric-line');
                 lyricElements.forEach((el, index) => {
                     const elCenter = el.offsetTop + el.clientHeight / 2;
@@ -402,7 +389,9 @@
                     }
                 });
 
+                // 如果找到的這句跟目前不同，就進行變更與快轉！
                 if (currentLyricIndex !== closestIndex) {
+                    // 1. 視覺上立刻替換高亮狀態
                     if (currentLyricIndex !== -1) {
                         const oldElement = document.getElementById(`lyric-${currentLyricIndex}`);
                         if (oldElement) oldElement.classList.remove('active');
@@ -411,6 +400,7 @@
                     if (newElement) newElement.classList.add('active');
                     currentLyricIndex = closestIndex;
                     
+                    // 2. 音樂進度即時快轉 (加入微微防手震延遲，確保播放順暢)
                     const now = Date.now();
                     if (now - lastScrubTime > 50) { 
                         audio.currentTime = parsedLyrics[closestIndex].time;
@@ -419,7 +409,7 @@
                 }
             });
 
-            // --- 系統自動時間更新 ---
+            // --- 原本的系統自動時間更新 ---
             audio.addEventListener('timeupdate', () => {
                 if (parsedLyrics.length === 0) return;
                 
@@ -439,6 +429,7 @@
                     if (newElement) {
                         newElement.classList.add('active');
                         
+                        // 【關鍵】如果使用者"沒有"在滑動，系統才幫忙自動捲動置中
                         if (!isUserInteracting) {
                             const targetScroll = newElement.offsetTop - lyricsWrapper.clientHeight / 2 + newElement.clientHeight / 2;
                             lyricsWrapper.scrollTo({
