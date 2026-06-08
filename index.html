@@ -241,9 +241,10 @@
             const lyricsContainer = document.getElementById('lyrics-container');
             const lyricsWrapper = document.getElementById('lyrics-wrapper');
 
-            let isAudioLoaded = true;
+            let isAudioLoaded = false;
             let parsedLyrics = []; 
             let currentLyricIndex = -1; 
+            let hasAttemptedAutoplay = false; // 防止重複觸發自動播放
             
             // 互動偵測變數 (判斷使用者是否正在手動滑歌詞)
             let isUserInteracting = false;
@@ -283,6 +284,25 @@
                 });
             }
 
+            // 【新增：嘗試自動播放的核心函數】
+            function attemptAutoplay() {
+                if (hasAttemptedAutoplay) return;
+                hasAttemptedAutoplay = true;
+
+                audio.play().then(() => {
+                    // 自動播放成功！
+                    cover.style.animationPlayState = 'running';
+                    statusText.style.display = 'none';
+                    console.log("瀏覽器允許自動播放，音樂已啟動！");
+                }).catch(error => {
+                    // 自動播放被阻擋（非常正常的情況）
+                    console.warn("瀏覽器阻擋了自動播放，需等待使用者點擊：", error);
+                    statusText.innerText = "請點擊 PLAY 播放";
+                    statusText.style.display = 'block';
+                });
+            }
+
+            // 3. 資料載入與檢查
             if (mediaDatabase[userId] && mediaDatabase[userId].audioUrl !== "") {
                 const userData = mediaDatabase[userId];
                 cover.src = userData.coverUrl;
@@ -295,12 +315,28 @@
                     lyricsContainer.innerHTML = '<div class="lyric-line">無歌詞資料</div>';
                 }
 
+                // 圖片載入完成
                 cover.onload = () => {
                     cover.style.display = 'block';
-                    statusText.style.display = 'none';
+                    if (!hasAttemptedAutoplay) {
+                        statusText.style.display = 'none';
+                    }
                     if(isAudioLoaded) {
                         playBtn.disabled = false;
                         stopBtn.disabled = false;
+                        attemptAutoplay(); // 圖片與音樂皆備妥，嘗試播放
+                    }
+                };
+
+                // 音樂載入至可播放狀態
+                audio.oncanplay = () => {
+                    if (!isAudioLoaded) {
+                        isAudioLoaded = true;
+                        if (cover.style.display === 'block') {
+                            playBtn.disabled = false;
+                            stopBtn.disabled = false;
+                            attemptAutoplay(); // 圖片與音樂皆備妥，嘗試播放
+                        }
                     }
                 };
             }
@@ -409,6 +445,7 @@
             playBtn.addEventListener('click', () => {
                 audio.play().then(() => {
                     cover.style.animationPlayState = 'running';
+                    statusText.style.display = 'none';
                 }).catch(error => console.log(error));
             });
 
