@@ -23,7 +23,6 @@
         
         .walkman-body { 
             background: linear-gradient(145deg, #e6e6e6, #c0c0c0); 
-            /* 針對手機滿版優化 */
             width: 90vw; 
             max-width: 450px; 
             height: 90vh; 
@@ -48,7 +47,7 @@
         
         .tape-window { 
             background-color: #111; 
-            flex: 0 0 40%; /* 佔據畫面上方 40% 空間 */
+            flex: 0 0 40%; 
             border-radius: 15px; 
             display: flex; 
             justify-content: center; 
@@ -67,7 +66,6 @@
             text-align: center;
         }
         
-        /* 放大版 CD 封面 */
         .cover-art { 
             width: 200px; 
             height: 200px; 
@@ -82,62 +80,58 @@
             background-color: #222;
         }
 
-        /* 歌詞容器區塊 */
+        /* 歌詞容器區塊 (升級為原生捲動) */
         .lyrics-wrapper {
-            flex: 1; /* 佔滿剩餘空間 */
+            flex: 1; 
             margin: 20px 0;
             background-color: rgba(0, 0, 0, 0.05);
             border-radius: 12px;
             border: 1px solid rgba(0,0,0,0.1);
-            overflow: hidden;
+            overflow-y: auto; /* 開啟原生滑動功能 */
             position: relative;
             /* 讓上下邊緣有漸層消失的效果 */
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+            /* 隱藏預設的醜醜捲軸 */
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        .lyrics-wrapper::-webkit-scrollbar { 
+            display: none; 
         }
 
         .lyrics-container {
-            position: absolute;
-            top: 50%; /* 讓第一句從中間開始 */
             width: 100%;
             text-align: center;
-            transition: transform 0.4s ease-out; /* 捲動動畫 */
+            /* 首尾加上大量空白，讓第一句和最後一句都能滑到畫面正中央 */
+            padding: 40vh 0; 
         }
 
         .lyric-line {
-            padding: 10px 15px;
-            font-size: 15px;
+            padding: 12px 15px;
+            font-size: 16px; /* 統一字體大小 */
             color: #666;
-            transition: all 0.3s ease;
+            transition: color 0.3s ease, text-shadow 0.3s ease; /* 只做顏色與發光的漸變動畫 */
             min-height: 20px;
-            cursor: pointer; /* 新增：讓游標變成可點擊的樣式 */
         }
 
-        /* 新增：手指點擊歌詞時的視覺回饋（稍微變淡、縮小） */
-        .lyric-line:active {
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
-
-        /* 正在播放的高亮歌詞 */
+        /* 正在播放的高亮歌詞 (優化版：純粹發光亮藍色，不放大) */
         .lyric-line.active {
-            color: #00a8ff; /* 更改為 KTV 風格的亮藍色 */
-            font-size: 19px;
+            color: #00a8ff; 
             font-weight: bold;
-            transform: scale(1.05);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 0px 0px 8px rgba(0, 168, 255, 0.6); /* KTV 發光質感 */
         }
         
         .controls { 
             display: flex; 
             justify-content: space-between; 
             padding: 0 5px;
-            margin-top: auto; /* 推到最底部 */
+            margin-top: auto; 
         }
         
         button { 
             width: 46%; 
-            height: 60px; /* 針對手機按壓優化放大 */
+            height: 60px; 
             border-radius: 10px; 
             border: none; 
             font-weight: 900; 
@@ -189,9 +183,9 @@
         </div>
 
         <!-- 動態歌詞顯示區 -->
-        <div class="lyrics-wrapper">
+        <div class="lyrics-wrapper" id="lyrics-wrapper">
             <div class="lyrics-container" id="lyrics-container">
-                <!-- 歌詞會透過 JavaScript 動態生成在這裡 -->
+                <!-- 歌詞會動態生成在這裡 -->
             </div>
         </div>
         
@@ -207,14 +201,12 @@
 
     <script>
         /* =========================================
-           資料設定區 (加入 lrc 歌詞欄位)
+           資料設定區
            ========================================= */
         const mediaDatabase = {
             "1": {
-                // 上傳 GitHub 時請改回你的檔名，例如 "cover1.jpg"
                 coverUrl: "cover1.png", 
                 audioUrl: "music1.mp3",
-                // 這裡填寫 LRC 格式的歌詞。注意：每一行前面都要有 [分:秒.毫秒]
                 lrc: `
 [00:16.88]校園裡笛聲悠揚　吹奏著畢業的樂章
 [00:24.68]背起相機走進故鄉　紀錄那最美的光芒
@@ -231,13 +223,25 @@
 [01:26.58]清脆笛音在迴盪　少年志氣比天長
 [01:30.86]去吧彥軍　去寫下屬於你的輝煌
                 `
-            },
+            }
             "2": {
-                coverUrl: "cover2.jpg", 
+                coverUrl: "cover2.png", 
                 audioUrl: "music2.mp3",
                 lrc: `
-[00:00.00] 第二首歌的歌詞
-[00:03.00] 請在這裡輸入...
+[00:16.88]校園裡笛聲悠揚　吹奏著畢業的樂章
+[00:24.68]背起相機走進故鄉　紀錄那最美的光芒
+[00:32.68]你是天資聰穎的少年　談吐間充滿自信力量
+[00:40.58]廖彥軍　向著夢想出發吧
+[00:43.99]在那寬廣舞台　你要盡情散發光華
+[00:48.07]像璀璨星辰　在那高處發熱發亮
+[00:52.10]未來的路　由你親手去勾勒畫像
+[00:56.80]活潑有禮　口才流利　大家都為你著迷
+[01:00.58]智慧是你的羽翼　讓你飛得更高更有力
+[01:04.83]但記得言語要得體　溫柔體察那每分情誼
+[01:12.32]更上一層樓　莫忘初衷那份純真
+[01:20.33]在成長的路上　打磨出最閃耀的靈魂
+[01:26.58]清脆笛音在迴盪　少年志氣比天長
+[01:30.86]去吧彥軍　去寫下屬於你的輝煌
                 `
             }
         };
@@ -254,18 +258,21 @@
             const playBtn = document.getElementById('play-btn');
             const stopBtn = document.getElementById('stop-btn');
             const statusText = document.getElementById('status-text');
-            const errorMsg = document.getElementById('error-msg');
             const lyricsContainer = document.getElementById('lyrics-container');
+            const lyricsWrapper = document.getElementById('lyrics-wrapper');
 
             let isAudioLoaded = true;
-            let parsedLyrics = []; // 儲存解析後的歌詞陣列
-            let currentLyricIndex = -1; // 記錄目前播放到第幾句
+            let parsedLyrics = []; 
+            let currentLyricIndex = -1; 
+            
+            // 互動偵測變數 (判斷使用者是否正在手動滑歌詞)
+            let isUserInteracting = false;
+            let interactionTimeout;
 
-            // 1. 解析 LRC 格式的函數
+            // 1. 解析 LRC
             function parseLRC(lrcString) {
                 const lines = lrcString.split('\n');
                 const result = [];
-                // 正規表達式用來抓取 [00:00.00] 或 [00:00.000]
                 const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
                 
                 for (let line of lines) {
@@ -274,7 +281,7 @@
                         const min = parseInt(match[1]);
                         const sec = parseInt(match[2]);
                         const ms = parseInt(match[3].padEnd(3, '0')); 
-                        const time = min * 60 + sec + ms / 1000; // 換算成總秒數
+                        const time = min * 60 + sec + ms / 1000;
                         const text = line.replace(timeReg, '').trim();
                         if (text) {
                             result.push({ time: time, text: text });
@@ -284,40 +291,23 @@
                 return result;
             }
 
-            // 2. 將歌詞渲染到畫面上
+            // 2. 渲染歌詞
             function renderLyrics(lyrics) {
-                lyricsContainer.innerHTML = ''; // 清空舊歌詞
+                lyricsContainer.innerHTML = ''; 
                 lyrics.forEach((lyric, index) => {
                     const div = document.createElement('div');
                     div.className = 'lyric-line';
                     div.id = `lyric-${index}`;
                     div.innerText = lyric.text;
-
-                    // 【新增功能：點擊歌詞即可快轉/倒轉】
-                    div.addEventListener('click', () => {
-                        // 確保音樂已經成功載入才能跳轉
-                        if (!isAudioLoaded) return; 
-                        
-                        // 1. 將音樂進度切換到該句歌詞的時間
-                        audio.currentTime = lyric.time; 
-                        
-                        // 2. 自動開始播放
-                        audio.play().then(() => {
-                            cover.style.animationPlayState = 'running';
-                        }).catch(err => console.log(err));
-                    });
-
                     lyricsContainer.appendChild(div);
                 });
             }
 
             if (mediaDatabase[userId] && mediaDatabase[userId].audioUrl !== "") {
                 const userData = mediaDatabase[userId];
-                
                 cover.src = userData.coverUrl;
                 audio.src = userData.audioUrl;
 
-                // 處理歌詞
                 if (userData.lrc) {
                     parsedLyrics = parseLRC(userData.lrc);
                     renderLyrics(parsedLyrics);
@@ -333,62 +323,104 @@
                         stopBtn.disabled = false;
                     }
                 };
-
-                cover.onerror = () => {
-                    cover.onerror = null; 
-                    cover.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23333' width='200' height='200'/%3E%3Ctext fill='%23888' font-family='sans-serif' font-size='18' dy='5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E"; 
-                    cover.style.display = 'block';
-                    statusText.style.display = 'none';
-                };
-
-                audio.onerror = () => {
-                    isAudioLoaded = false;
-                    playBtn.disabled = true;
-                    stopBtn.disabled = true;
-                    playBtn.innerText = "ERROR";
-                    statusText.innerText = "音樂載入失敗";
-                    statusText.style.display = 'block';
-                };
-
-                audio.oncanplay = () => {
-                    isAudioLoaded = true;
-                    playBtn.disabled = false;
-                    stopBtn.disabled = false;
-                };
-
-            } else {
-                statusText.innerText = "無效的 ID";
-                errorMsg.style.display = 'block';
             }
 
-            // 3. 核心：監聽音樂時間，同步更新歌詞狀態
+            // --- 核心：滑動歌詞來快轉/倒轉的邏輯 ---
+
+            // 設定使用者正在互動的狀態
+            function setInteracting() {
+                isUserInteracting = true;
+                clearTimeout(interactionTimeout);
+            }
+
+            // 解除互動狀態，延遲一下讓系統接手自動捲動
+            function clearInteracting() {
+                interactionTimeout = setTimeout(() => {
+                    isUserInteracting = false;
+                }, 1000); 
+            }
+
+            // 監聽各種觸控與滑鼠事件
+            lyricsWrapper.addEventListener('touchstart', setInteracting, {passive: true});
+            lyricsWrapper.addEventListener('touchmove', setInteracting, {passive: true});
+            lyricsWrapper.addEventListener('touchend', clearInteracting);
+            lyricsWrapper.addEventListener('mousedown', setInteracting);
+            window.addEventListener('mouseup', () => { if(isUserInteracting) clearInteracting(); });
+            lyricsWrapper.addEventListener('wheel', () => {
+                setInteracting();
+                clearInteracting();
+            }, {passive: true});
+
+            // 當歌詞容器被滑動時...
+            let lastScrubTime = 0;
+            lyricsWrapper.addEventListener('scroll', () => {
+                // 如果是系統自動捲動，或是還沒載入，就不介入
+                if (!isUserInteracting || parsedLyrics.length === 0 || !isAudioLoaded) return;
+
+                // 計算目前畫面的正中央位置
+                const wrapperCenter = lyricsWrapper.scrollTop + lyricsWrapper.clientHeight / 2;
+                let closestIndex = 0;
+                let minDistance = Infinity;
+
+                // 找出哪一句歌詞最靠近畫面中央
+                const lyricElements = document.querySelectorAll('.lyric-line');
+                lyricElements.forEach((el, index) => {
+                    const elCenter = el.offsetTop + el.clientHeight / 2;
+                    const distance = Math.abs(wrapperCenter - elCenter);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestIndex = index;
+                    }
+                });
+
+                // 如果找到的這句跟目前不同，就進行變更與快轉！
+                if (currentLyricIndex !== closestIndex) {
+                    // 1. 視覺上立刻替換高亮狀態
+                    if (currentLyricIndex !== -1) {
+                        const oldElement = document.getElementById(`lyric-${currentLyricIndex}`);
+                        if (oldElement) oldElement.classList.remove('active');
+                    }
+                    const newElement = document.getElementById(`lyric-${closestIndex}`);
+                    if (newElement) newElement.classList.add('active');
+                    currentLyricIndex = closestIndex;
+                    
+                    // 2. 音樂進度即時快轉 (加入微微防手震延遲，確保播放順暢)
+                    const now = Date.now();
+                    if (now - lastScrubTime > 50) { 
+                        audio.currentTime = parsedLyrics[closestIndex].time;
+                        lastScrubTime = now;
+                    }
+                }
+            });
+
+            // --- 原本的系統自動時間更新 ---
             audio.addEventListener('timeupdate', () => {
                 if (parsedLyrics.length === 0) return;
                 
                 const currentTime = audio.currentTime;
-                // 找出目前應該播放哪一句
                 let newIndex = parsedLyrics.findIndex((lyric, index) => {
                     const nextTime = parsedLyrics[index + 1] ? parsedLyrics[index + 1].time : Infinity;
                     return currentTime >= lyric.time && currentTime < nextTime;
                 });
 
-                // 如果行數有變更，才執行更新與動畫
                 if (newIndex !== -1 && newIndex !== currentLyricIndex) {
-                    // 移除舊的高亮
                     if (currentLyricIndex !== -1) {
                         const oldElement = document.getElementById(`lyric-${currentLyricIndex}`);
                         if (oldElement) oldElement.classList.remove('active');
                     }
                     
-                    // 加上新的高亮
                     const newElement = document.getElementById(`lyric-${newIndex}`);
                     if (newElement) {
                         newElement.classList.add('active');
                         
-                        // 計算捲動距離：讓高亮的該行保持在容器中央
-                        // 單行預估高度約為 40px (15px padding + 字體)
-                        const offset = newIndex * -40; 
-                        lyricsContainer.style.transform = `translateY(${offset}px)`;
+                        // 【關鍵】如果使用者"沒有"在滑動，系統才幫忙自動捲動置中
+                        if (!isUserInteracting) {
+                            const targetScroll = newElement.offsetTop - lyricsWrapper.clientHeight / 2 + newElement.clientHeight / 2;
+                            lyricsWrapper.scrollTo({
+                                top: targetScroll,
+                                behavior: 'smooth'
+                            });
+                        }
                     }
                     currentLyricIndex = newIndex;
                 }
@@ -397,9 +429,7 @@
             playBtn.addEventListener('click', () => {
                 audio.play().then(() => {
                     cover.style.animationPlayState = 'running';
-                }).catch(error => {
-                    console.error("播放失敗", error);
-                });
+                }).catch(error => console.log(error));
             });
 
             stopBtn.addEventListener('click', () => {
